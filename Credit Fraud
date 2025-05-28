@@ -1,0 +1,53 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df = pd.read_csv(r"C:\Users\Param\Desktop\CodSoft\fraudTrain.csv")
+
+
+df = df.dropna(subset=['is_fraud'])
+
+
+df['category_encoded'] = LabelEncoder().fit_transform(df['category'].astype(str))
+df['gender_encoded'] = LabelEncoder().fit_transform(df['gender'].astype(str))
+
+features = ['amt', 'city_pop', 'category_encoded', 'gender_encoded']
+target = 'is_fraud'
+
+X = df[features].copy()
+y = df[target].copy()
+
+X['amt'] = X['amt'].astype(float)
+X['city_pop'] = X['city_pop'].astype(float)
+
+scaler = StandardScaler()
+X[['amt', 'city_pop']] = scaler.fit_transform(X[['amt', 'city_pop']])
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42, stratify=y
+)
+
+
+model = RandomForestClassifier(n_estimators=20, random_state=42)
+model.fit(X_train, y_train)
+
+
+y_pred = model.predict(X_test)
+
+
+print("✅ Accuracy:", accuracy_score(y_test, y_pred))
+print("\n📊 Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+
+importances = model.feature_importances_
+feature_names = features
+
+plt.figure(figsize=(6,4))
+sns.barplot(x=importances, y=feature_names)
+plt.title('Feature Importances')
+plt.xlabel('Importance')
+plt.ylabel('Feature')
+plt.show()
